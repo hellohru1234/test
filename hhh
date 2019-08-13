@@ -1,0 +1,76 @@
+pipeline {
+    agent {
+      label "master"
+    }
+    
+    environment {
+        
+	    BUILD_MANAGER = 'dharshapriyan@gmail.com.com'
+        PROJECT_TECH_LEAD = 'dharshapriyan@gmail.com.com'
+        
+      
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building..'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing..'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying....'
+            }
+        }
+    }
+
+post{
+        always{
+            warnings canResolveRelativePaths: false, categoriesPattern: '', defaultEncoding: '', healthy: '', includePattern: '', messagesPattern: '', unHealthy: '', usePreviousBuildAsReference: true
+        }
+        success
+		{
+			script
+			{
+				currentBuild.result = "SUCCESS"
+				def jobName = currentBuild.fullDisplayName
+				emailext body:'''${JELLY_SCRIPT, template="DAT2.0_ASW754.jelly"}''', 
+				mimeType: 'text/html', subject: "[Jenkins] Build Successful: ${jobName}",
+				to: "cc:${BUILD_MANAGER}, cc:${PROJECT_TECH_LEAD}",
+				recipientProviders: [developers()]
+				
+				
+			}
+        }
+		
+		unstable{
+			script
+			{
+				def jobName = currentBuild.fullDisplayName
+				emailext body:'''${JELLY_SCRIPT, template="DAT2.0_ASW754.jelly"}''',
+				mimeType: 'text/html',
+				subject: "[Jenkins] Build UNSTABLE NEED ACTION: ${jobName}",
+				to: "cc:${BUILD_MANAGER}, cc:${PROJECT_TECH_LEAD}",
+				recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+				
+				
+			}
+
+        }
+       failure{
+            script{
+                def jobName = currentBuild.fullDisplayName
+                emailext body:'''${JELLY_SCRIPT, template="DAT2.0_ASW754.jelly"}''',
+                mimeType: 'text/html',
+                subject: "[Jenkins] Build FAILURE!: ${jobName}",
+                to: "cc:${BUILD_MANAGER}, cc:${PROJECT_TECH_LEAD}",
+                recipientProviders: [[$class: 'CulpritsRecipientProvider']]
+           }
+        }
+    }
+}
